@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::ops::Mul;
 use std::fmt::Display;
 
-use crate::matrix_base;
+use crate::matrix_base::*;
 
 #[derive(Clone, Copy)]
 struct Item<T> {
@@ -38,13 +38,57 @@ impl<T : Add<Output = T>> Add for Item<T> {
         }
     }
 }
-
 #[derive(Default, Clone)]
 struct TheRow<T>(i64, Vec<Item<T>>);
 
 impl<T : Default + Copy> TheRow<T> {
     fn new(row_index : i64) -> TheRow<T> {
         TheRow(row_index, Default::default())
+    }
+}
+
+pub struct IterItem<'a, T>(i64, &'a Item<T>);
+
+impl<'a, T> IterItem<'a, T> {
+    fn get_row(self : &Self) -> i64 {
+        self.0
+    }
+
+    fn get_col(self : &Self) -> i64 {
+        self.1.index
+    }
+
+    fn get_v(self : &Self) -> &'_ T {
+        &self.1.value
+    }
+}
+
+pub struct RowIterator<'a, T> {
+    row : i64,
+    real_index : i64,
+    holder : &'a Vec<Item<T>>,
+}
+
+impl<'a, T> RowIterator<'a, T> {
+    fn new(row : i64, h : &'a Vec<Item<T>>) -> RowIterator<'a, T> {
+        RowIterator {
+            row : row,
+            real_index : 0,
+            holder : h,
+        }
+    }
+}
+
+impl<'a, T> Iterator for RowIterator<'a, T> {
+    type Item = IterItem<'a, T>;
+    fn next(self : &mut Self) -> Option<Self::Item> {
+        if self.real_index as usize == self.holder.len() {
+            None
+        } else {
+            let v = IterItem(self.row, &self.holder[self.real_index as usize]);
+            self.real_index += 1;
+            Some(v)
+        }
     }
 }
 
@@ -66,7 +110,13 @@ impl<T : Default + Copy> SparseMatrix<T> {
     }
 }
 
-impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_base::Matrix<T> for SparseMatrix<T> {
+impl<'a, T : Default + Copy> MatrixIterator<'a, RowIterator<'a, T>> for SparseMatrix<T> {
+    fn get_iterator(self : &'a Self, row : i64) -> RowIterator<'a, T> {
+        RowIterator::new(row, &self.container[row as usize].1)
+    }
+}
+
+impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<'a, T, RowIterator<'a, T>> for SparseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         self.row
     }
@@ -109,7 +159,7 @@ impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_ba
         } 
     }
 
-    fn get<'a>(self : &'a Self, row : &i64, col : &i64) -> Option<&'a T> {
+    fn get(self : &Self, row : &i64, col : &i64) -> Option<&T> {
         if *row >= self.get_row() || *col >= self.get_column() {
             panic!("out of range");
         }
@@ -161,7 +211,7 @@ impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_ba
                     tmp.push(the_row_i[real_index_i].clone());
                     real_index_i += 1;
                 } else {
-                    tmp.push(Item::new(the_row_j[real_index_j].index, the_row_j[real_index_j].value * k));
+                    tmp.push(the_row_j[real_index_j] * k);
                     real_index_j += 1;
                 }
                 if real_index_i >= the_row_i.len() || real_index_j >= the_row_j.len() {
@@ -174,7 +224,8 @@ impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_ba
                 real_index_i += 1;
             }
             while real_index_j < the_row_j.len() {
-                tmp.push(Item::new(the_row_j[real_index_j].index, the_row_j[real_index_j].value * k));
+                tmp.push(the_row_j[real_index_j] * k);
+                //tmp.push(Item::new(the_row_j[real_index_j].index, the_row_j[real_index_j].value * k));
                 real_index_j += 1;
             }
             self.container[*row_i as usize] = TheRow(*row_i, tmp);   
@@ -183,9 +234,10 @@ impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_ba
 
     fn print(self : &Self) {
         println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
-        for each in self.container.iter() {
-            for v in each.1.iter() {
-                println!("m[{}, {}] = {}", each.0, v.index, v.value);
+        for row in 0..self.row {
+            let iterator = self.get_iterator(row);
+            for v in iterator {
+                println!("m[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
             }
         }
     }

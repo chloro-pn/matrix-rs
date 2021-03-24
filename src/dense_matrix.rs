@@ -2,7 +2,57 @@ use std::ops::Add;
 use std::ops::Mul;
 use std::fmt::Display;
 
-use crate::matrix_base;
+use crate::matrix_base::*;
+
+pub struct Item<'a, T>(i64, i64, &'a T);
+
+impl<'a, T> Item<'a, T> {
+    fn new(row : i64, col : i64, v : &'a T) -> Item<'a, T> {
+        Item(row, col, v)
+    }
+
+    fn get_row(self : &Self) -> i64 {
+        self.0
+    }
+
+    fn get_col(self : &Self) -> i64 {
+        self.1
+    }
+
+    fn get_v(self : &Self) -> &'_ T {
+        self.2
+    }
+}
+
+pub struct RowIterator<'a, T : Default + Copy> {
+    row : i64,
+    col : i64,
+    holder : &'a DenseMatrix<T>,
+}
+
+impl<'a, T : Default + Copy> RowIterator<'a, T> {
+    fn new(r : i64, h : &'a DenseMatrix<T>) -> RowIterator<'a, T> {
+        RowIterator {
+            row : r,
+            col : 0,
+            holder : h
+        }
+    }
+}
+
+impl<'a, T : Default + Copy> Iterator for RowIterator<'a, T> {
+    type Item = Item<'a, T>;
+    fn next(self : &mut Self) -> Option<Self::Item> {
+        if self.col >= self.holder.col {
+            None
+        } else {
+            let v = &self.holder.container[self.holder.get_index(&self.row, &self.col)];
+            let tmp = Some(Item::new(self.row, self.col, v));
+            self.col += 1;
+            tmp
+        }
+    }
+}
 
 pub struct DenseMatrix<T : Default + Copy> {
     row : i64,
@@ -10,7 +60,7 @@ pub struct DenseMatrix<T : Default + Copy> {
     container : Vec<T>,
 }
 
-impl<T : Default + Copy> DenseMatrix<T> {
+impl<'a, T : Default + Copy> DenseMatrix<T> {
     pub fn new(r : i64, c : i64) -> DenseMatrix<T> {
         let mut v = DenseMatrix {
             row : r,
@@ -26,7 +76,13 @@ impl<T : Default + Copy> DenseMatrix<T> {
     }
 }
 
-impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_base::Matrix<T> for DenseMatrix<T> {
+impl<'a, T : Default + Copy> MatrixIterator<'a, RowIterator<'a, T>> for DenseMatrix<T> {
+    fn get_iterator(self : &'a Self, row : i64) -> RowIterator<'a, T> {
+        RowIterator::new(row, self)
+    }
+}
+
+impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<'a, T, RowIterator<'a, T>> for DenseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         return self.row;
     }
@@ -51,7 +107,7 @@ impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_ba
         self.container[index] = value + self.container[index];
     }
 
-    fn get<'a>(self : &'a Self, row : &i64, col : &i64) -> Option<&'a T> {
+    fn get(self : &Self, row : &i64, col : &i64) -> Option<&T> {
         if *row >= self.get_row() || *col >= self.get_column() {
             panic!("out of range");
         }
@@ -92,9 +148,10 @@ impl<T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> matrix_ba
 
     fn print(self : &Self) {
         println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
-        for i in 0..self.get_row() {
-            for j in 0..self.get_column() {
-                println!("m[{}, {}] = {}", i, j, *self.get(&i, &j).unwrap());
+        for row in 0..self.get_row() {
+            let ri = self.get_iterator(row);
+            for v in ri {
+                println!("m[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
             }
         }
     }
