@@ -103,7 +103,7 @@ impl<T : Default + Copy> SparseMatrix<T> {
         let mut m : SparseMatrix<T> = SparseMatrix {
             row : row,
             col : col,
-            container : Default::default(),
+            container : Vec::new(),
         };
         m.container.resize(row as usize, Default::default());
         m

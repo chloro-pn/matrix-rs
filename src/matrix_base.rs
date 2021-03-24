@@ -1,8 +1,8 @@
 
-pub trait MatrixIterator<'a, T : Iterator + 'a> {
+pub trait MatrixIterator<'a, T : Iterator> {
     fn get_iterator(self : &'a Self, row : i64) -> T;
 }
-pub trait Matrix<'b, T, T2 : Iterator + 'b> : MatrixIterator<'b, T2> {
+pub trait Matrix<'b, T, T2 : Iterator> : MatrixIterator<'b, T2> {
     fn get_row(&self) -> i64;
     fn get_column(&self) ->i64;
     fn set(&mut self, row : &i64, col : &i64, value : T);

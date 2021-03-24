@@ -3,6 +3,7 @@ use std::ops::Mul;
 use std::fmt::Display;
 
 use crate::matrix_base::*;
+use crate::vector::*;
 
 pub struct Item<'a, T>(i64, i64, &'a T);
 
@@ -73,6 +74,25 @@ impl<'a, T : Default + Copy> DenseMatrix<T> {
 
     pub fn get_index(self : &Self, r : &i64, c : &i64) -> usize {
         (*r * self.col + *c) as usize
+    }
+
+    pub fn set_nth_column(self : &mut Self, col : i64, v : Vector<T>) {
+        if v.length() != self.row as usize {
+            panic!("set column error, mismatch length !");
+        }
+        for i in 0..self.row {
+            let index = self.get_index(&i, &col);
+            self.container[index] = v[i as usize];
+        }
+    }
+
+    pub fn get_nth_column(self : &mut Self, col : i64) -> Vector<T> {
+        let mut v = Vector::new(self.row);
+        for i in 0..self.row {
+            let index = self.get_index(&i, &col);
+            v.set(i, self.container[index]);
+        }
+        v
     }
 }
 
@@ -148,9 +168,9 @@ impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matri
 
     fn print(self : &Self) {
         println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
-        for row in 0..self.get_row() {
-            let ri = self.get_iterator(row);
-            for v in ri {
+        for row in 0..self.row {
+            let iterator = self.get_iterator(row);
+            for v in iterator {
                 println!("m[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
             }
         }
