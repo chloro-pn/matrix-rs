@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::Index;
 
 pub struct VectorIter<'a, T> {
@@ -40,7 +41,9 @@ impl<T : Clone> Vector<T> {
         v.container.resize(length as usize, value);
         v
     }
+}
 
+impl<T> Vector<T> {
     pub fn set(self : &mut Self, index : i64, v : T) {
         self.container[index as usize] = v;
     }
@@ -57,9 +60,20 @@ impl<T : Clone> Vector<T> {
     }
 }
 
-impl<T : Clone + Default> Index<usize> for Vector<T> {
+impl<T> Index<usize> for Vector<T> {
     type Output = T;
     fn index(self : &Self, index : usize) -> &Self::Output {
         &self.container[index]
+    }
+}
+
+impl<T : Display> Vector<T> {
+    pub fn print(self : &Self) {
+        println!("v.length() = {}", self.length());
+        let mut index : usize = 0;
+        for i in self.get_iterator() {
+            println!("v[{}] = {}", index, i);
+            index += 1;
+        }
     }
 }

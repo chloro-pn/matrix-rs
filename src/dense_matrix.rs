@@ -20,18 +20,18 @@ impl<'a, T> Item<'a, T> {
         self.1
     }
 
-    fn get_v(self : &Self) -> &'_ T {
+    fn get_v(self : &Self) -> &T {
         self.2
     }
 }
 
-pub struct RowIterator<'a, T : Default + Copy> {
+pub struct RowIterator<'a, T> {
     row : i64,
     col : i64,
     holder : &'a DenseMatrix<T>,
 }
 
-impl<'a, T : Default + Copy> RowIterator<'a, T> {
+impl<'a, T> RowIterator<'a, T> {
     fn new(r : i64, h : &'a DenseMatrix<T>) -> RowIterator<'a, T> {
         RowIterator {
             row : r,
@@ -41,7 +41,7 @@ impl<'a, T : Default + Copy> RowIterator<'a, T> {
     }
 }
 
-impl<'a, T : Default + Copy> Iterator for RowIterator<'a, T> {
+impl<'a, T> Iterator for RowIterator<'a, T> {
     type Item = Item<'a, T>;
     fn next(self : &mut Self) -> Option<Self::Item> {
         if self.col >= self.holder.col {
@@ -55,13 +55,13 @@ impl<'a, T : Default + Copy> Iterator for RowIterator<'a, T> {
     }
 }
 
-pub struct DenseMatrix<T : Default + Copy> {
+pub struct DenseMatrix<T> {
     row : i64,
     col : i64,
     container : Vec<T>,
 }
 
-impl<'a, T : Default + Copy> DenseMatrix<T> {
+impl<T : Default + Copy> DenseMatrix<T> {
     pub fn new(r : i64, c : i64) -> DenseMatrix<T> {
         let mut v = DenseMatrix {
             row : r,
@@ -71,11 +71,19 @@ impl<'a, T : Default + Copy> DenseMatrix<T> {
         v.container.resize((r * c) as usize, Default::default());
         v
     }
+}
 
+impl<T> DenseMatrix<T> {
     pub fn get_index(self : &Self, r : &i64, c : &i64) -> usize {
         (*r * self.col + *c) as usize
     }
 
+    fn get_iterator<'a>(self : &'a Self, row : i64) -> RowIterator<'a, T> {
+        RowIterator::new(row, self)
+    }
+}
+
+impl<T : Copy> DenseMatrix<T> {
     pub fn set_nth_column(self : &mut Self, col : i64, v : Vector<T>) {
         if v.length() != self.row as usize {
             panic!("set column error, mismatch length !");
@@ -85,7 +93,9 @@ impl<'a, T : Default + Copy> DenseMatrix<T> {
             self.container[index] = v[i as usize];
         }
     }
+}
 
+impl<T : Clone + Default + Copy> DenseMatrix<T> {
     pub fn get_nth_column(self : &mut Self, col : i64) -> Vector<T> {
         let mut v = Vector::new(self.row);
         for i in 0..self.row {
@@ -96,13 +106,8 @@ impl<'a, T : Default + Copy> DenseMatrix<T> {
     }
 }
 
-impl<'a, T : Default + Copy> MatrixIterator<'a, RowIterator<'a, T>> for DenseMatrix<T> {
-    fn get_iterator(self : &'a Self, row : i64) -> RowIterator<'a, T> {
-        RowIterator::new(row, self)
-    }
-}
-
-impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<'a, T, RowIterator<'a, T>> for DenseMatrix<T> {
+impl<'a, T> Matrix<T> for DenseMatrix<T>
+    where T: Default + Copy + Add<Output = T> + Mul<Output = T> + Display  {
     fn get_row(self : &Self) -> i64 {
         return self.row;
     }

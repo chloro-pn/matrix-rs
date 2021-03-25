@@ -38,7 +38,7 @@ impl<T : Add<Output = T>> Add for Item<T> {
         }
     }
 }
-#[derive(Default, Clone)]
+#[derive(Clone, Default)]
 struct TheRow<T>(i64, Vec<Item<T>>);
 
 impl<T : Default + Copy> TheRow<T> {
@@ -92,13 +92,13 @@ impl<'a, T> Iterator for RowIterator<'a, T> {
     }
 }
 
-pub struct SparseMatrix<T : Default + Copy> {
+pub struct SparseMatrix<T> {
     row : i64,
     col : i64,
     container : Vec<TheRow<T>>,
 }
 
-impl<T : Default + Copy> SparseMatrix<T> {
+impl<T : Default + Clone> SparseMatrix<T> {
     pub fn new(row : i64, col : i64) -> SparseMatrix<T> {
         let mut m : SparseMatrix<T> = SparseMatrix {
             row : row,
@@ -110,13 +110,13 @@ impl<T : Default + Copy> SparseMatrix<T> {
     }
 }
 
-impl<'a, T : Default + Copy> MatrixIterator<'a, RowIterator<'a, T>> for SparseMatrix<T> {
-    fn get_iterator(self : &'a Self, row : i64) -> RowIterator<'a, T> {
+impl<T> SparseMatrix<T> {
+    fn get_iterator<'a>(self : &'a Self, row : i64) -> RowIterator<'a, T> {
         RowIterator::new(row, &self.container[row as usize].1)
     }
 }
 
-impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<'a, T, RowIterator<'a, T>> for SparseMatrix<T> {
+impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<T> for SparseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         self.row
     }

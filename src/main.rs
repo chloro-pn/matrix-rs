@@ -16,6 +16,9 @@ fn main() {
     m.set_nth_column(0, Vector::new_with(3, 11));
     m.print();
 
+    let v = m.get_nth_column(1);
+    v.print();
+
     let mut m : SparseMatrix<i32> = SparseMatrix::new(200, 500);
     m.set(&105, &25, 143);
     m.add(&105, &25, 2);
