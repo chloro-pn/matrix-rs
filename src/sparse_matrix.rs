@@ -41,7 +41,7 @@ impl<T : Add<Output = T>> Add for Item<T> {
 #[derive(Clone, Default)]
 struct TheRow<T>(i64, Vec<Item<T>>);
 
-impl<T : Default + Copy> TheRow<T> {
+impl<T : Default + Clone> TheRow<T> {
     fn new(row_index : i64) -> TheRow<T> {
         TheRow(row_index, Default::default())
     }
@@ -58,7 +58,7 @@ impl<'a, T> IterItem<'a, T> {
         self.1.index
     }
 
-    fn get_v(self : &Self) -> &'_ T {
+    fn get_v(self : &Self) -> &T {
         &self.1.value
     }
 }
@@ -69,8 +69,8 @@ pub struct RowIterator<'a, T> {
     holder : &'a Vec<Item<T>>,
 }
 
-impl<'a, T> RowIterator<'a, T> {
-    fn new(row : i64, h : &'a Vec<Item<T>>) -> RowIterator<'a, T> {
+impl<T> RowIterator<'_, T> {
+    fn new<'a, 'b : 'a>(row : i64, h : &'b Vec<Item<T>>) -> RowIterator<'a, T> {
         RowIterator {
             row : row,
             real_index : 0,
@@ -116,7 +116,7 @@ impl<T> SparseMatrix<T> {
     }
 }
 
-impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<T> for SparseMatrix<T> {
+impl<'a, T : Default + Clone + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<T> for SparseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         self.row
     }
@@ -208,7 +208,7 @@ impl<'a, T : Default + Copy + Add<Output = T> + Mul<Output = T> + Display> Matri
                     real_index_i += 1;
                     real_index_j += 1;
                 } else if col_index_i < col_index_j {
-                    tmp.push(the_row_i[real_index_i].clone());
+                    tmp.push(the_row_i[real_index_i]);
                     real_index_i += 1;
                 } else {
                     tmp.push(the_row_j[real_index_j] * k);
