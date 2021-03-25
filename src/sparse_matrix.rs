@@ -92,14 +92,15 @@ impl<'a, T> Iterator for RowIterator<'a, T> {
     }
 }
 
+#[derive(Clone)]
 pub struct SparseMatrix<T> {
     row : i64,
     col : i64,
     container : Vec<TheRow<T>>,
 }
 
-impl<T : Default + Clone> SparseMatrix<T> {
-    pub fn new(row : i64, col : i64) -> SparseMatrix<T> {
+impl<T : Default + Clone> MatrixInit<T> for SparseMatrix<T> {
+    fn new(row : i64, col : i64) -> SparseMatrix<T> {
         let mut m : SparseMatrix<T> = SparseMatrix {
             row : row,
             col : col,
@@ -116,7 +117,7 @@ impl<T> SparseMatrix<T> {
     }
 }
 
-impl<'a, T : Default + Clone + Copy + Add<Output = T> + Mul<Output = T> + Display> Matrix<T> for SparseMatrix<T> {
+impl<'a, T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = T> + Display + PartialEq> Matrix<T> for SparseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         self.row
     }
@@ -230,6 +231,16 @@ impl<'a, T : Default + Clone + Copy + Add<Output = T> + Mul<Output = T> + Displa
             }
             self.container[*row_i as usize] = TheRow(*row_i, tmp);   
         }
+    }
+
+    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self {
+        /*just for test*/
+        let mut m = Self::get_identity_matrix(1);
+        m
+    }
+
+    fn set_from_matrix(self : &mut Self, row_begin : &i64, col_begin : &i64, m : &Self) {
+        /*just for test*/
     }
 
     fn print(self : &Self) {

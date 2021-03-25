@@ -5,25 +5,26 @@ mod vector;
 
 use dense_matrix::DenseMatrix;
 use sparse_matrix::SparseMatrix;
-use matrix_base::Matrix;
+use matrix_base::*;
 use vector::Vector;
 
 fn main() {
-    let mut m : DenseMatrix<i32> = DenseMatrix::new(3, 3);
-    m.set(&1, &1, 25);
-    m.set(&1, &2, 30);
-    m.element_row_transform_multi(&1, 55);
-    m.set_nth_column(0, Vector::new_with(3, 11));
-    m.print();
+    let mut m : DenseMatrix<f32> = DenseMatrix::new(3, 3);
+    m.set(&0, &0, 1.0);
+    m.set(&0, &1, 2.0);
+    m.set(&0, &2, 3.0);
+    m.set(&1, &0, 2.0);
+    m.set(&1, &1, 2.0);
+    m.set(&1, &2, 1.0);
+    m.set(&2, &0, 3.0);
+    m.set(&2, &1, 4.0);
+    m.set(&2, &2, 3.0);
+    m.inverse().print();
 
-    let v = m.get_nth_column(1);
-    v.print();
-
-    let mut m : SparseMatrix<i32> = SparseMatrix::new(200, 500);
-    m.set(&105, &25, 143);
-    m.add(&105, &25, 2);
-    m.set(&2, &24, 15);
+    let mut m : SparseMatrix<f32> = SparseMatrix::new(200, 500);
+    m.set(&105, &25, 143.0);
+    m.add(&105, &25, 2.0);
+    m.set(&2, &24, 15.0);
     m.element_row_transform_swap(&105, &2);
-    m.element_row_transform_plus(&2, &105, 2);
-    m.print();
+    m.element_row_transform_plus(&2, &105, 2.0);
 }

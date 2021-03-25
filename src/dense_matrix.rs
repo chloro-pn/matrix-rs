@@ -55,14 +55,15 @@ impl<'a, T> Iterator for RowIterator<'a, T> {
     }
 }
 
+#[derive(Clone)]
 pub struct DenseMatrix<T> {
     row : i64,
     col : i64,
     container : Vec<T>,
 }
 
-impl<T : Default + Copy> DenseMatrix<T> {
-    pub fn new(r : i64, c : i64) -> DenseMatrix<T> {
+impl<T : Default + Copy> MatrixInit<T> for DenseMatrix<T> {
+    fn new(r : i64, c : i64) -> DenseMatrix<T> {
         let mut v = DenseMatrix {
             row : r,
             col : c,
@@ -107,7 +108,7 @@ impl<T : Clone + Default + Copy> DenseMatrix<T> {
 }
 
 impl<'a, T> Matrix<T> for DenseMatrix<T>
-    where T: Default + Copy + Add<Output = T> + Mul<Output = T> + Display  {
+    where T: Default + Copy + Add<Output = T> + Mul<Output = T> + Display + Group<T> + PartialEq {
     fn get_row(self : &Self) -> i64 {
         return self.row;
     }
@@ -171,13 +172,36 @@ impl<'a, T> Matrix<T> for DenseMatrix<T>
         }
     }
 
+    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self {
+        let mut m : DenseMatrix<T> = DenseMatrix::new(*row, *col);
+        for i in *row_begin..(*row_begin + *row) {
+            for j in *col_begin..(*col_begin + *col) {
+                let m_i = i - row_begin;
+                let m_j = j - col_begin;
+                m.set(&m_i, &m_j, *self.get(&i, &j).unwrap());
+            }
+        }
+        m
+    }
+
+    fn set_from_matrix(self : &mut Self, row_begin : &i64, col_begin : &i64, m : &Self) {
+        for i in 0..m.get_row() {
+            for j in 0..m.get_column() {
+                let s_i = i + row_begin;
+                let s_j = j + col_begin;
+                self.set(&s_i, &s_j, *m.get(&i, &j).unwrap());
+            } 
+        }
+    }
+
     fn print(self : &Self) {
         println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
         for row in 0..self.row {
             let iterator = self.get_iterator(row);
             for v in iterator {
-                println!("m[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
+                print!("[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
             }
+            print!("\n");
         }
     }
 }
