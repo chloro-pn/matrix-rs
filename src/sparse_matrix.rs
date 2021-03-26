@@ -69,8 +69,8 @@ pub struct RowIterator<'a, T> {
     holder : &'a Vec<Item<T>>,
 }
 
-impl<T> RowIterator<'_, T> {
-    fn new<'a, 'b : 'a>(row : i64, h : &'b Vec<Item<T>>) -> RowIterator<'a, T> {
+impl<'a, T> RowIterator<'a, T> {
+    fn new(row : i64, h : &'a Vec<Item<T>>) -> RowIterator<'a, T> {
         RowIterator {
             row : row,
             real_index : 0,
@@ -100,24 +100,21 @@ pub struct SparseMatrix<T> {
 }
 
 impl<T : Default + Clone> MatrixInit<T> for SparseMatrix<T> {
-    fn new(row : i64, col : i64) -> SparseMatrix<T> {
-        let mut m : SparseMatrix<T> = SparseMatrix {
-            row : row,
-            col : col,
-            container : Vec::new(),
+    fn new(row : &i64, col : &i64) -> Self {
+        let mut m = SparseMatrix {
+            row : *row,
+            col : *col,
+            container : Default::default(),
         };
-        m.container.resize(row as usize, Default::default());
+        m.container.resize(*row as usize, Default::default());
+        for row in 0..m.container.len() {
+            m.container[row].0 = row as i64;
+        }
         m
     }
 }
 
-impl<T> SparseMatrix<T> {
-    fn get_iterator<'a>(self : &'a Self, row : i64) -> RowIterator<'a, T> {
-        RowIterator::new(row, &self.container[row as usize].1)
-    }
-}
-
-impl<'a, T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = T> + Display + PartialEq> Matrix<T> for SparseMatrix<T> {
+impl<T : Display + Clone + Default> ConstMatrix<T> for SparseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         self.row
     }
@@ -126,6 +123,50 @@ impl<'a, T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = 
         self.col
     }
 
+    fn get(self : &Self, row : &i64, col : &i64) -> Option<&T> {
+        if *row >= self.get_row() || *col >= self.get_column() {
+            panic!("out of range");
+        }
+        let the_row : &TheRow<T> = &self.container[*row as usize];
+        let the_item = the_row.1.iter().find(|x| x.index == *col);
+        match the_item {
+            Some(item) => Some(&item.value),
+            None => None,
+        }
+    }
+
+    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self {
+        let mut m = Self::new(row, col);
+        for i in *row_begin..(*row_begin + *row) {
+            let m_i = i - *row_begin;
+            for each in self.get_iterator(&i) {
+                if each.get_col() >= *col_begin && each.get_col() < *col_begin + *col {
+                    m.container[m_i as usize].1.push(Item::new(each.get_col() - *col_begin, each.get_v().clone()));
+                }
+            }
+        }
+        m
+    }
+
+    fn print(self : &Self) {
+        println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
+        for row in 0..self.row {
+            let iterator = self.get_iterator(&row);
+            for v in iterator {
+                print!("[{}, {}] = {} ", v.get_row(), v.get_col(), v.get_v());
+            }
+            print!("\n");
+        }
+    }
+}
+
+impl<T>  SparseMatrix<T> {
+    fn get_iterator(self : &Self, row : &i64) -> RowIterator<'_, T> {
+        RowIterator::new(*row, &self.container[*row as usize].1)
+    }
+}
+
+impl<T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = T> + Display + PartialEq> Matrix<T> for SparseMatrix<T> {
     fn set(self : &mut Self, row : &i64, col : &i64, value : T) {
         if *row >= self.get_row() || *col >= self.get_column() {
             panic!("out of range");
@@ -158,18 +199,6 @@ impl<'a, T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = 
         if the_row.len() > 1 {
             the_row.sort_by(|a, b| a.index.cmp(&b.index));
         } 
-    }
-
-    fn get(self : &Self, row : &i64, col : &i64) -> Option<&T> {
-        if *row >= self.get_row() || *col >= self.get_column() {
-            panic!("out of range");
-        }
-        let the_row : &TheRow<T> = &self.container[*row as usize];
-        let the_item = the_row.1.iter().find(|x| x.index == *col);
-        match the_item {
-            Some(item) => Some(&item.value),
-            None => None,
-        }
     }
 
     fn element_row_transform_swap(&mut self, row_i : &i64, row_j : &i64) {
@@ -230,26 +259,6 @@ impl<'a, T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = 
                 real_index_j += 1;
             }
             self.container[*row_i as usize] = TheRow(*row_i, tmp);   
-        }
-    }
-
-    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self {
-        /*just for test*/
-        let mut m = Self::get_identity_matrix(1);
-        m
-    }
-
-    fn set_from_matrix(self : &mut Self, row_begin : &i64, col_begin : &i64, m : &Self) {
-        /*just for test*/
-    }
-
-    fn print(self : &Self) {
-        println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
-        for row in 0..self.row {
-            let iterator = self.get_iterator(row);
-            for v in iterator {
-                println!("m[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
-            }
         }
     }
 }

@@ -26,23 +26,39 @@ impl Group<f32> for f32 {
 }
 
 pub trait MatrixInit<T> {
-    fn new(row : i64, col : i64) -> Self;
+    fn new(row : &i64, col : &i64) -> Self;
 }
-
-pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixInit<T> + Clone {
+pub trait ConstMatrix<T> {
     fn get_row(&self) -> i64;
     fn get_column(&self) ->i64;
+    fn get(&self, row : &i64, col : &i64) -> Option<&T>;
+    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self;
+    fn print(self : &Self);
+}
+
+pub trait MatrixIterator<T : Iterator> {
+    fn get_iterator(self : &Self, row : &i64) -> T;
+}
+
+pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixInit<T> + ConstMatrix<T> + Clone {
     fn set(&mut self, row : &i64, col : &i64, value : T);
     fn add(&mut self, row : &i64, col : &i64, value : T);
-    fn get(&self, row : &i64, col : &i64) -> Option<&T>;
     fn element_row_transform_swap(&mut self, row_i : &i64, row_j : &i64);
     fn element_row_transform_multi(&mut self, row : &i64, k : T);
     fn element_row_transform_plus(&mut self, row_i : &i64, row_j : &i64, k : T);
-    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self;
-    fn set_from_matrix(self : &mut Self, row_begin : &i64, col_begin : &i64, m : &Self);
+
+    fn set_from_matrix<T2 : ConstMatrix<T>>(self : &mut Self, row_begin : &i64, col_begin : &i64, m : &T2) {
+        for i in 0..m.get_row() {
+            for j in 0..m.get_column() {
+                let s_i = i + row_begin;
+                let s_j = j + col_begin;
+                self.set(&s_i, &s_j, m.get(&i, &j).unwrap().clone());
+            } 
+        }
+    }
 
     fn get_identity_matrix(rc : i64) -> Self where Self: Sized {
-        let mut m = Self::new(rc, rc);
+        let mut m = Self::new(&rc, &rc);
         for i in 0..rc {
             m.set(&i, &i, T::get_identity_mul() /*单位元*/);
         }
@@ -54,7 +70,7 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
             panic!("matrix inverse need row == col");
         }
         if self.get_row() == 1 && self.get_column() == 1 {
-            let mut m = Self::new(1, 1);
+            let mut m = self.clone();
             m.set(&0, &0, (*self.get(&0, &0).unwrap()).get_inverse_mul() /*逆元*/);
             return m;
         }
@@ -99,6 +115,4 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
         }
         result
     }
-
-    fn print(self : &Self);
 }

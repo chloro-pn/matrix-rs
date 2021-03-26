@@ -62,15 +62,56 @@ pub struct DenseMatrix<T> {
     container : Vec<T>,
 }
 
-impl<T : Default + Copy> MatrixInit<T> for DenseMatrix<T> {
-    fn new(r : i64, c : i64) -> DenseMatrix<T> {
-        let mut v = DenseMatrix {
-            row : r,
-            col : c,
-            container : Vec::new(),
+impl<T : Default + Clone> MatrixInit<T> for DenseMatrix<T> {
+    fn new(row : &i64, col : &i64) -> Self {
+        let mut m = DenseMatrix {
+            row : *row,
+            col : *col,
+            container : Default::default(),
         };
-        v.container.resize((r * c) as usize, Default::default());
-        v
+        m.container.resize((*row * *col) as usize, Default::default());
+        m
+    }
+}
+
+impl<T : Display + Default + Copy> ConstMatrix<T> for DenseMatrix<T> {
+    fn get_row(self : &Self) -> i64 {
+        return self.row;
+    }
+
+    fn get_column(self : &Self) -> i64 {
+        return self.col;
+    }
+
+    fn get(self : &Self, row : &i64, col : &i64) -> Option<&T> {
+        if *row >= self.get_row() || *col >= self.get_column() {
+            panic!("out of range");
+        }
+        Some(&self.container[self.get_index(row, col)])
+    }
+
+    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> DenseMatrix<T> {
+        let mut m : DenseMatrix<T> = DenseMatrix::new(row, col);
+        for i in *row_begin..(*row_begin + *row) {
+            for j in *col_begin..(*col_begin + *col) {
+                let m_i = i - *row_begin;
+                let m_j = j - *col_begin;
+                let index = m.get_index(&m_i, &m_j);
+                m.container[index] = *self.get(&i, &j).unwrap();
+            }
+        }
+        m
+    }
+
+    fn print(self : &Self) {
+        println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
+        for row in 0..self.row {
+            let iterator = self.get_iterator(row);
+            for v in iterator {
+                print!("[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
+            }
+            print!("\n");
+        }
     }
 }
 
@@ -109,14 +150,6 @@ impl<T : Clone + Default + Copy> DenseMatrix<T> {
 
 impl<'a, T> Matrix<T> for DenseMatrix<T>
     where T: Default + Copy + Add<Output = T> + Mul<Output = T> + Display + Group<T> + PartialEq {
-    fn get_row(self : &Self) -> i64 {
-        return self.row;
-    }
-
-    fn get_column(self : &Self) -> i64 {
-        return self.col;
-    }
-
     fn set(self : &mut Self, row : &i64, col : &i64, value : T) {
         if *row >= self.get_row() || *col >= self.get_column() {
             panic!("out of range");
@@ -131,13 +164,6 @@ impl<'a, T> Matrix<T> for DenseMatrix<T>
         }
         let index = self.get_index(row, col);
         self.container[index] = value + self.container[index];
-    }
-
-    fn get(self : &Self, row : &i64, col : &i64) -> Option<&T> {
-        if *row >= self.get_row() || *col >= self.get_column() {
-            panic!("out of range");
-        }
-        Some(&self.container[self.get_index(row, col)])
     }
 
     fn element_row_transform_swap(&mut self, row_i : &i64, row_j : &i64) {
@@ -169,39 +195,6 @@ impl<'a, T> Matrix<T> for DenseMatrix<T>
             let i1 = self.get_index(&row_i, &j);
             let i2 = self.get_index(&row_j, &j);
             self.container[i1] = self.container[i1] + self.container[i2] * k;
-        }
-    }
-
-    fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self {
-        let mut m : DenseMatrix<T> = DenseMatrix::new(*row, *col);
-        for i in *row_begin..(*row_begin + *row) {
-            for j in *col_begin..(*col_begin + *col) {
-                let m_i = i - row_begin;
-                let m_j = j - col_begin;
-                m.set(&m_i, &m_j, *self.get(&i, &j).unwrap());
-            }
-        }
-        m
-    }
-
-    fn set_from_matrix(self : &mut Self, row_begin : &i64, col_begin : &i64, m : &Self) {
-        for i in 0..m.get_row() {
-            for j in 0..m.get_column() {
-                let s_i = i + row_begin;
-                let s_j = j + col_begin;
-                self.set(&s_i, &s_j, *m.get(&i, &j).unwrap());
-            } 
-        }
-    }
-
-    fn print(self : &Self) {
-        println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
-        for row in 0..self.row {
-            let iterator = self.get_iterator(row);
-            for v in iterator {
-                print!("[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
-            }
-            print!("\n");
         }
     }
 }
