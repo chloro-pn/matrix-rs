@@ -125,30 +125,30 @@ impl<T> DenseMatrix<T> {
     }
 }
 
-impl<T : Copy> DenseMatrix<T> {
+impl<T : Clone> DenseMatrix<T> {
     pub fn set_nth_column(self : &mut Self, col : i64, v : Vector<T>) {
         if v.length() != self.row as usize {
             panic!("set column error, mismatch length !");
         }
         for i in 0..self.row {
             let index = self.get_index(&i, &col);
-            self.container[index] = v[i as usize];
+            self.container[index] = v[i as usize].clone();
         }
     }
 }
 
-impl<T : Clone + Default + Copy> DenseMatrix<T> {
+impl<T : Clone + Default> DenseMatrix<T> {
     pub fn get_nth_column(self : &mut Self, col : i64) -> Vector<T> {
         let mut v = Vector::new(self.row);
         for i in 0..self.row {
             let index = self.get_index(&i, &col);
-            v.set(i, self.container[index]);
+            v.set(i, self.container[index].clone());
         }
         v
     }
 }
 
-impl<'a, T> Matrix<T> for DenseMatrix<T>
+impl<T> Matrix<T> for DenseMatrix<T>
     where T: Default + Copy + Add<Output = T> + Mul<Output = T> + Display + Group<T> + PartialEq {
     fn set(self : &mut Self, row : &i64, col : &i64, value : T) {
         if *row >= self.get_row() || *col >= self.get_column() {
