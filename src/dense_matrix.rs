@@ -151,25 +151,16 @@ impl<T : Clone + Default> DenseMatrix<T> {
 impl<T> Matrix<T> for DenseMatrix<T>
     where T: Default + Copy + Add<Output = T> + Mul<Output = T> + Display + Group<T> + PartialEq {
     fn set(self : &mut Self, row : &i64, col : &i64, value : T) {
-        if *row >= self.get_row() || *col >= self.get_column() {
-            panic!("out of range");
-        }
         let index = self.get_index(row, col);
         self.container[index] = value;
     }
 
     fn add(self : &mut Self, row : &i64, col : &i64, value : T) {
-        if *row >= self.get_row() || *col >= self.get_column() {
-            panic!("out of range");
-        }
         let index = self.get_index(row, col);
         self.container[index] = value + self.container[index];
     }
 
     fn element_row_transform_swap(&mut self, row_i : &i64, row_j : &i64) {
-        if *row_i >= self.get_row() || *row_j >= self.get_row() {
-            panic!("out of range");
-        }
         for j in 0..self.get_column() {
             let i1 = self.get_index(&row_i, &j);
             let i2 = self.get_index(&row_j, &j);
@@ -178,9 +169,6 @@ impl<T> Matrix<T> for DenseMatrix<T>
     }
 
     fn element_row_transform_multi(&mut self, row : &i64, k : T) {
-        if *row >= self.get_row() {
-            panic!("out of range");
-        }
         for j in 0..self.get_column() {
             let index = self.get_index(&row, &j);
             self.container[index] = self.container[index] * k;
@@ -188,9 +176,6 @@ impl<T> Matrix<T> for DenseMatrix<T>
     }
 
     fn element_row_transform_plus(&mut self, row_i : &i64, row_j : &i64, k : T) {
-        if *row_i >= self.get_row() || *row_j >= self.get_row() {
-            panic!("out of range");
-        }
         for j in 0..self.get_column() {
             let i1 = self.get_index(&row_i, &j);
             let i2 = self.get_index(&row_j, &j);

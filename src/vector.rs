@@ -77,3 +77,64 @@ impl<T : Display> Vector<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vector_new() {
+        let v : Vector<i32> = Vector::new(3);
+        assert_eq!(v.length(), 3);
+        let n : i32 = Default::default();
+        assert_eq!(v[0], n);
+        assert_eq!(v[1], n);
+        assert_eq!(v[2], n);
+    }
+
+    #[test]
+    fn vector_new_with() {
+        let v : Vector<i32> = Vector::new_with(3, 11);
+        assert_eq!(v.length(), 3);
+        let n : i32 = 11;
+        assert_eq!(v[0], n);
+        assert_eq!(v[1], n);
+        assert_eq!(v[2], n);
+    }
+
+    #[test]
+    #[should_panic]
+    fn vector_index_out_of_range() {
+        let v : Vector<i32> = Vector::new(3);
+        let _ = v[3];
+    }
+
+    #[test]
+    fn vector_set() {
+        let mut v : Vector<i32> = Vector::new(2);
+        v.set(0, 12);
+        v.set(1, 34);
+        assert_eq!(v[0], 12);
+        assert_eq!(v[1], 34);
+    }
+
+    #[test]
+    #[should_panic]
+    fn vector_set_out_of_range() {
+        let mut v : Vector<i32> = Vector::new(2);
+        v.set(2, 11);
+    }
+
+    #[test]
+    fn vector_iterator() {
+        let mut v : Vector<i32> = Vector::new(3);
+        v.set(0, 1);
+        v.set(1, 2);
+        v.set(2, 3);
+        let mut count = 1;
+        for each in v.get_iterator() {
+            assert_eq!(*each, count);
+            count += 1;
+        }
+    }
+}
