@@ -78,6 +78,23 @@ impl<T : Display> Vector<T> {
     }
 }
 
+// 被声明在crate根作用域，并且始终是pub
+#[macro_export]
+macro_rules! vector {
+    ($($var : expr),*) => {{ 
+        let mut v = Vec::new();
+        $(v.push($var);)*
+        let length = v.len();
+        let mut vv = Vector::new(length as i64);
+        let mut index = 0;
+        for each in v.into_iter() {
+            vv.set(index, each);
+            index += 1;
+        }
+        vv
+    }};
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

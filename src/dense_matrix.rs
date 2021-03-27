@@ -108,7 +108,7 @@ impl<T : Display + Default + Copy> ConstMatrix<T> for DenseMatrix<T> {
         for row in 0..self.row {
             let iterator = self.get_iterator(&row);
             for v in iterator {
-                print!("[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
+                print!("[{}, {}] = {} ", v.get_row(), v.get_col(), v.get_v());
             }
             print!("\n");
         }
@@ -185,3 +185,45 @@ impl<T> Matrix<T> for DenseMatrix<T>
         }
     }
 }
+
+#[macro_export]
+macro_rules! matrix_row {
+    (($($var : expr),+)) => {{
+        let mut v = Vec::new();
+        $(v.push($var);)+
+        v   
+    }};
+}
+
+#[macro_export]
+macro_rules! dmatrix {
+    ($($row : tt);+) => {{
+        let mut vc = Vec::new();
+        let mut r : i64 = 0;
+        let mut c : i64 = 0;
+        $(
+        let v = matrix_row!($row);
+        if r == 0 {
+            c = v.len() as i64;
+        } else {
+            if c != v.len() as i64 {
+                panic!("matrix row has different len, {} != {}", c, v.len());
+            }
+        }
+        vc.push(v);
+        r += 1;
+        )+
+        let mut m = DenseMatrix::new(&r, &c);
+        r = 0;
+        for each_row in vc.into_iter() {
+            c = 0;
+            for each in each_row.into_iter() {
+                m.set(&r, &c, each);
+                c += 1;
+            }
+            r += 1;
+        }
+        m
+    }};
+}
+
