@@ -34,14 +34,13 @@ pub trait ConstMatrix<T> {
     fn get_column(&self) ->i64;
     fn get(&self, row : &i64, col : &i64) -> Option<&T>;
     fn get_sub_matrix(&self, row_begin : &i64, row : &i64, col_begin : &i64, col : &i64) -> Self;
-    fn print(self : &Self);
 }
 
 pub trait MatrixIterator<'a, T : Iterator + 'a> {
     fn get_iterator<'b : 'a>(self : &'b Self, row : &i64) -> T;
 }
 
-pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixInit<T> + ConstMatrix<T> + Clone {
+pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixInit<T> + ConstMatrix<T> + Clone + Sized {
     fn set(&mut self, row : &i64, col : &i64, value : T);
     fn add(&mut self, row : &i64, col : &i64, value : T);
     fn element_row_transform_swap(&mut self, row_i : &i64, row_j : &i64);
@@ -58,7 +57,7 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
         }
     }
 
-    fn get_identity_matrix(rc : i64) -> Self where Self: Sized {
+    fn get_identity_matrix(rc : i64) -> Self {
         let mut m = Self::new(&rc, &rc);
         for i in 0..rc {
             m.set(&i, &i, T::get_identity_mul() /*单位元*/);
@@ -66,14 +65,14 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
         m
     }
 
-    fn inverse(self : &Self) -> Self where Self: Sized {
+    fn inverse(self : &Self) -> Option<Self> {
         if self.get_row() != self.get_column() {
             panic!("matrix inverse need row == col");
         }
         if self.get_row() == 1 && self.get_column() == 1 {
             let mut m = self.clone();
             m.set(&0, &0, (*self.get(&0, &0).unwrap()).get_inverse_mul() /*逆元*/);
-            return m;
+            return Some(m);
         }
         let mut myself = self.clone();
         let mut result = Self::get_identity_matrix(self.get_row());
@@ -89,7 +88,7 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
                     }
                 }
                 if error == true {
-                    panic!("the matrix cannot inverse!");
+                    return None;
                 }
             }
             for j in (i+1)..self.get_row() {
@@ -113,7 +112,7 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
                 j -= 1;
             }
         }
-        result
+        Some(result)
     }
 }
 

@@ -1,6 +1,6 @@
 use std::ops::Add;
 use std::ops::Mul;
-use std::fmt::Display;
+use std::fmt::{Formatter, Display};
 
 use crate::matrix_base::*;
 use crate::vector::*;
@@ -74,7 +74,7 @@ impl<T : Default + Clone> MatrixInit<T> for DenseMatrix<T> {
     }
 }
 
-impl<T : Display + Default + Copy> ConstMatrix<T> for DenseMatrix<T> {
+impl<T : Default + Copy> ConstMatrix<T> for DenseMatrix<T> {
     fn get_row(self : &Self) -> i64 {
         return self.row;
     }
@@ -102,16 +102,19 @@ impl<T : Display + Default + Copy> ConstMatrix<T> for DenseMatrix<T> {
         }
         m
     }
+}
 
-    fn print(self : &Self) {
-        println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
+impl<T : Display> Display for DenseMatrix<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "dmatrix[{}, {}]:\n", self.row, self.col).unwrap();
         for row in 0..self.row {
             let iterator = self.get_iterator(&row);
             for v in iterator {
-                print!("[{}, {}] = {} ", v.get_row(), v.get_col(), v.get_v());
+                write!(f, "[{}, {}] = {} ", v.get_row(), v.get_col(), v.get_v()).unwrap();
             }
-            print!("\n");
+            write!(f, "\n").unwrap();
         }
+        write!(f, "")
     }
 }
 

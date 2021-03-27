@@ -10,8 +10,8 @@ use matrix_base::*;
 use vector::Vector;
 
 fn main() {
-    let m = matrix![SparseMatrix<f32> => (1.0, 2.0, 3.0);(2.0, 2.0, 1.0);(3.0, 4.0, 3.0)];
-    m.inverse().print();
+    let m = matrix![DenseMatrix<f32> => (1.0, 2.0, 3.0);(2.0, 2.0, 1.0);(3.0, 4.0, 3.0)];
+    println!("{}", m.inverse().unwrap());
 
     let mut m : SparseMatrix<f32> = SparseMatrix::new(&200, &500);
     m.set(&105, &25, 143.0);

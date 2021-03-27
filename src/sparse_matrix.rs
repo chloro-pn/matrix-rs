@@ -1,6 +1,6 @@
 use std::ops::Add;
 use std::ops::Mul;
-use std::fmt::Display;
+use std::fmt::{Formatter, Display};
 
 use crate::matrix_base::*;
 
@@ -106,7 +106,7 @@ impl<T : Default + Clone> MatrixInit<T> for SparseMatrix<T> {
             col : *col,
             container : Default::default(),
         };
-        m.container.resize(*row as usize, Default::default());
+        m.container.resize(*row as usize, TheRow::new(0));
         for row in 0..m.container.len() {
             m.container[row].0 = row as i64;
         }
@@ -147,16 +147,19 @@ impl<T : Display + Clone + Default> ConstMatrix<T> for SparseMatrix<T> {
         }
         m
     }
+}
 
-    fn print(self : &Self) {
-        println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
+impl<T : Display> Display for SparseMatrix<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "smatrix[{}, {}] : \n", self.row, self.col).unwrap();
         for row in 0..self.row {
             let iterator = self.get_iterator(&row);
             for v in iterator {
-                print!("[{}, {}] = {} ", v.get_row(), v.get_col(), v.get_v());
+                write!(f, "[{}, {}] = {} ", v.get_row(), v.get_col(), v.get_v()).unwrap();
             }
-            print!("\n");
+            write!(f, "\n").unwrap();
         }
+        write!(f, "")
     }
 }
 
