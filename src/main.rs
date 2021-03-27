@@ -1,3 +1,4 @@
+
 mod dense_matrix;
 mod sparse_matrix;
 mod matrix_base;
@@ -8,12 +9,8 @@ use sparse_matrix::SparseMatrix;
 use matrix_base::*;
 use vector::Vector;
 
-fn test<T : Default>() -> T{
-    Default::default()
-}
-
 fn main() {
-    let mut m : SparseMatrix<f32> = SparseMatrix::new(&3, &3);
+    let mut m : DenseMatrix<f32> = DenseMatrix::new(&3, &3);
     m.set(&0, &0, 1.0);
     m.set(&0, &1, 2.0);
     m.set(&0, &2, 3.0);

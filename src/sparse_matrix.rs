@@ -160,8 +160,8 @@ impl<T : Display + Clone + Default> ConstMatrix<T> for SparseMatrix<T> {
     }
 }
 
-impl<T>  SparseMatrix<T> {
-    fn get_iterator(self : &Self, row : &i64) -> RowIterator<'_, T> {
+impl<'a, T> MatrixIterator<'a, RowIterator<'a, T>> for SparseMatrix<T> {
+    fn get_iterator<'b : 'a>(self : &'b Self, row : &i64) -> RowIterator<'a, T> {
         RowIterator::new(*row, &self.container[*row as usize].1)
     }
 }
@@ -177,7 +177,6 @@ impl<T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = T> +
             item.value = value;
             return;
         }
-        
         the_row.push(Item::new(*col, value));
         if the_row.len() > 1 {
             the_row.sort_by(|a, b| a.index.cmp(&b.index));
@@ -194,7 +193,6 @@ impl<T : Group<T> + Default + Clone + Copy + Add<Output = T> + Mul<Output = T> +
             item.value = item.value + value;
             return;
         }
-        
         the_row.push(Item::new(*col, value));
         if the_row.len() > 1 {
             the_row.sort_by(|a, b| a.index.cmp(&b.index));

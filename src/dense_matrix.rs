@@ -106,7 +106,7 @@ impl<T : Display + Default + Copy> ConstMatrix<T> for DenseMatrix<T> {
     fn print(self : &Self) {
         println!("matrix row = {}, col = {}", self.get_row(), self.get_column());
         for row in 0..self.row {
-            let iterator = self.get_iterator(row);
+            let iterator = self.get_iterator(&row);
             for v in iterator {
                 print!("[{}, {}] = {}", v.get_row(), v.get_col(), v.get_v());
             }
@@ -119,9 +119,11 @@ impl<T> DenseMatrix<T> {
     pub fn get_index(self : &Self, r : &i64, c : &i64) -> usize {
         (*r * self.col + *c) as usize
     }
+}
 
-    fn get_iterator<'a>(self : &'a Self, row : i64) -> RowIterator<'a, T> {
-        RowIterator::new(row, self)
+impl<'a, T> MatrixIterator<'a, RowIterator<'a, T>> for DenseMatrix<T> {
+    fn get_iterator<'b : 'a>(self : &'b Self, row : &i64) -> RowIterator<'a, T> {
+        RowIterator::new(*row, self)
     }
 }
 

@@ -28,6 +28,7 @@ impl Group<f32> for f32 {
 pub trait MatrixInit<T> {
     fn new(row : &i64, col : &i64) -> Self;
 }
+
 pub trait ConstMatrix<T> {
     fn get_row(&self) -> i64;
     fn get_column(&self) ->i64;
@@ -36,8 +37,8 @@ pub trait ConstMatrix<T> {
     fn print(self : &Self);
 }
 
-pub trait MatrixIterator<T : Iterator> {
-    fn get_iterator(self : &Self, row : &i64) -> T;
+pub trait MatrixIterator<'a, T : Iterator + 'a> {
+    fn get_iterator<'b : 'a>(self : &'b Self, row : &i64) -> T;
 }
 
 pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixInit<T> + ConstMatrix<T> + Clone {
