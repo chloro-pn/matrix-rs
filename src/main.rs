@@ -10,7 +10,7 @@ use matrix_base::*;
 use vector::Vector;
 
 fn main() {
-    let m = dmatrix![(1.0, 2.0, 3.0);(2.0, 2.0, 1.0);(3.0, 4.0, 3.0)];
+    let m = matrix![SparseMatrix<f32> => (1.0, 2.0, 3.0);(2.0, 2.0, 1.0);(3.0, 4.0, 3.0)];
     m.inverse().print();
 
     let mut m : SparseMatrix<f32> = SparseMatrix::new(&200, &500);

@@ -78,7 +78,6 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
         let mut myself = self.clone();
         let mut result = Self::get_identity_matrix(self.get_row());
         for i in 0..self.get_row() {
-            println!("i = {}", i);
             if *myself.get(&i, &i).unwrap() == T::get_identity_add() {
                 let mut error = true;
                 for j in (i+1)..self.get_row() {
@@ -117,3 +116,45 @@ pub trait Matrix<T : Mul<Output = T> + Group<T> + PartialEq + Clone> : MatrixIni
         result
     }
 }
+
+#[macro_export]
+macro_rules! matrix_row {
+    (($($var : expr),+)) => {{
+        let mut v = Vec::new();
+        $(v.push($var);)+
+        v   
+    }};
+}
+
+#[macro_export]
+macro_rules! matrix {
+    ($mtype : ty => $($row : tt);+) => {{
+        let mut vc = Vec::new();
+        let mut r : i64 = 0;
+        let mut c : i64 = 0;
+        $(
+        let v = matrix_row!($row);
+        if r == 0 {
+            c = v.len() as i64;
+        } else {
+            if c != v.len() as i64 {
+                panic!("matrix row has different len, {} != {}", c, v.len());
+            }
+        }
+        vc.push(v);
+        r += 1;
+        )+
+        let mut m = <$mtype>::new(&r, &c);
+        r = 0;
+        for each_row in vc.into_iter() {
+            c = 0;
+            for each in each_row.into_iter() {
+                m.set(&r, &c, each);
+                c += 1;
+            }
+            r += 1;
+        }
+        m
+    }};
+}
+
