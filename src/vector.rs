@@ -2,17 +2,17 @@ use std::fmt::Display;
 use std::ops::Index;
 
 pub struct VectorIter<'a, T> {
-    index : i64,
+    index : usize,
     holder : &'a Vector<T>,
 }
 
 impl<'a, T> Iterator for VectorIter<'a, T> {
     type Item = &'a T;
     fn next(self : &mut Self) -> Option<Self::Item> {
-        if self.index as usize == self.holder.container.len() {
+        if self.index == self.holder.container.len() {
             None
         } else {
-            let v = &self.holder.container[self.index as usize];
+            let v = &self.holder.container[self.index];
             self.index += 1;
             Some(v)
         }
@@ -24,28 +24,29 @@ pub struct Vector<T> {
 }
 
 impl<T : Clone + Default> Vector<T> {
-    pub fn new(length : i64) -> Vector<T> {
+    pub fn new(length : usize) -> Vector<T> {
         let mut v : Vector<T> = Vector {
             container : Vec::new(),
         };
-        v.container.resize(length as usize, Default::default());
+        v.container.resize(length, Default::default());
         v
     }
 }
 
 impl<T : Clone> Vector<T> {
-    pub fn new_with(length : i64, value : T) -> Vector<T> {
+    #[warn(dead_code)]
+    pub fn new_with(length : usize, value : T) -> Vector<T> {
         let mut v : Vector<T> = Vector {
             container : Vec::new(),
         };
-        v.container.resize(length as usize, value);
+        v.container.resize(length, value);
         v
     }
 }
 
 impl<T> Vector<T> {
-    pub fn set(self : &mut Self, index : i64, v : T) {
-        self.container[index as usize] = v;
+    pub fn set(self : &mut Self, index : usize, v : T) {
+        self.container[index] = v;
     }
 
     pub fn get_iterator(self : &Self) -> VectorIter<'_, T> {
@@ -67,14 +68,15 @@ impl<T> Index<usize> for Vector<T> {
     }
 }
 
-impl<T : Display> Vector<T> {
-    pub fn print(self : &Self) {
-        println!("v.length() = {}", self.length());
+impl<T : Display> std::fmt::Display for Vector<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "vector[{}] : \n", self.length()).unwrap();
         let mut index : usize = 0;
-        for i in self.get_iterator() {
-            println!("v[{}] = {}", index, i);
+        for v in self.get_iterator() {
+            write!(f, "[{}] = {} \n", index, v).unwrap();
             index += 1;
         }
+        write!(f, "")
     }
 }
 
@@ -85,7 +87,7 @@ macro_rules! vector {
         let mut v = Vec::new();
         $(v.push($var);)*
         let length = v.len();
-        let mut vv = Vector::new(length as i64);
+        let mut vv = Vector::new(length);
         let mut index = 0;
         for each in v.into_iter() {
             vv.set(index, each);
